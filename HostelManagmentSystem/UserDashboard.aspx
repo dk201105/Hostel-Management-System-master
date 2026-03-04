@@ -79,7 +79,6 @@
                 <div style="display:flex; justify-content:space-between; font-weight:bold; color:#888; border-bottom:1px solid #ddd; padding-bottom:10px; margin-bottom:10px;">
                     <span style="width:30%">Item Name</span>
                     <span style="width:20%">Amt Remaining</span>
-                    <span style="width:30%">Expiry Date</span>
                     <span style="width:15%">Action</span>
                 </div>
 
@@ -87,8 +86,7 @@
                     <ItemTemplate>
                         <div class="item-row">
                             <div class="item-name"><span class="badge bg-pink"><%# Eval("ItemName") %></span></div>
-                            <div style="width:20%"><%# Eval("Quantity") %> <%# Eval("Unit") %></div>
-                            <div style="width:30%"><%# Eval("ExpiryDate", "{0:dd MMM yyyy}") %></div>
+                            <div style="width:20%"><%# Eval("Quantity") %>></div>
                             <div style="width:15%">
                                 <asp:Button ID="btnSelect" runat="server" Text="UPDATE" CommandName="Select" CommandArgument='<%# Eval("ItemID") %>' CssClass="btn-update-list" />
                             </div>

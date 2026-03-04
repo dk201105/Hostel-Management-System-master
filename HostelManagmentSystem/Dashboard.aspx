@@ -363,8 +363,6 @@
                     <table>
                         <thead><tr><th>Item</th><th>Vendor</th><th>Qty</th><th>Date</th></tr></thead>
                         <tbody>
-                            <tr><td>Rice</td><td>ABC Supplies</td><td>100 kg</td><td>2024-05-29</td></tr>
-                            <tr><td>Eggs</td><td>Eggs Co</td><td>10 kg</td><td>2024-05-21</td></tr>
                         </tbody>
                     </table>
                 </div>
