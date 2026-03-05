@@ -20,14 +20,13 @@ namespace HostelManagmentSystem
         {
             // 1. Get values from the HTML page
             string fullName = txtFullName.Text.Trim();
-            string email = txtEmail.Text.Trim();
+            string email = txtEmail.Text.Trim();   // will be stored in UserInfo
             string password = txtPassword.Text.Trim();
             string confirmPass = txtConfirmPassword.Text.Trim();
-            string role = ddlRole.SelectedValue; 
-
+            string role = ddlRole.SelectedValue;
 
             // 2. Basic Validation
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrEmpty(fullName) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
                 lblMessage.Text = "All fields are required.";
                 lblMessage.ForeColor = Color.Red;
@@ -47,11 +46,10 @@ namespace HostelManagmentSystem
                 {
                     conn.Open();
 
-                    // 3. Check if Email already exists in the 'Users' table
-                    // Note: We use 'FullName' because that is the column name in your database
-                    string checkQuery = "SELECT COUNT(*) FROM Users WHERE FullName = @Email";
+                    // 3. Check if Email already exists in the 'Users' table (stored in UserInfo)
+                    string checkQuery = "SELECT COUNT(*) FROM Users WHERE UserInfo = @UserInfo";
                     SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
-                    checkCmd.Parameters.AddWithValue("@Email", email);
+                    checkCmd.Parameters.AddWithValue("@UserInfo", email);
 
                     int count = (int)checkCmd.ExecuteScalar();
 
@@ -63,22 +61,15 @@ namespace HostelManagmentSystem
                     }
 
                     // 4. Insert new user into 'Users' table
-                    // We map the HTML inputs to your Database Columns:
-                    // FullName       -> email
-                    // PasswordHash -> password
-                    // Role           -> role
-                    string insertQuery = "INSERT INTO Users (FullName, Email, PasswordHash, Role) VALUES (@FullName, @Email, @Password, @Role)";
+                    string insertQuery = "INSERT INTO Users (FullName, PasswordHash, Role, UserInfo) VALUES (@FullName, @Password, @Role, @UserInfo)";
 
                     SqlCommand cmd = new SqlCommand(insertQuery, conn);
-
-                    // Use the new fullName variable here
                     cmd.Parameters.AddWithValue("@FullName", fullName);
-                    cmd.Parameters.AddWithValue("@Email", email);
-                    cmd.Parameters.AddWithValue("@Password", password);
+                    cmd.Parameters.AddWithValue("@Password", password); // ideally hash this
                     cmd.Parameters.AddWithValue("@Role", role);
+                    cmd.Parameters.AddWithValue("@UserInfo", email);
 
                     cmd.ExecuteNonQuery();
-
 
                     // 5. Success
                     lblMessage.Text = "Account created successfully!";
