@@ -15,12 +15,16 @@ namespace HostelManagmentSystem
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // SECURITY: If the session is empty, the user is not logged in.
+            if (Session["FullName"] == null)
+            {
+                Response.Redirect("Login.aspx");
+            }
+
             if (!IsPostBack)
             {
-                if (Session["UserEmail"] != null)
-                {
-                    lblFullName.Text = Session["UserEmail"].ToString();
-                }
+                // Set the label to the user's name from the session
+                lblFullName.Text = Session["FullName"].ToString();
 
                 LoadStats();
                 LoadInventory();
@@ -35,7 +39,7 @@ namespace HostelManagmentSystem
             {
                 // Revised query to calculate status on the fly based on Quantity vs QuantityThreshold
                 string query = @"
-                    SELECT 
+                    SELECT
                         COUNT(*) as Total,
                         SUM(CASE WHEN Quantity > QuantityThreshold THEN 1 ELSE 0 END) as Safe,
                         SUM(CASE WHEN Quantity <= QuantityThreshold AND Quantity > 0 THEN 1 ELSE 0 END) as Soon,
@@ -112,9 +116,23 @@ namespace HostelManagmentSystem
                 cmd.ExecuteNonQuery();
             }
 
-            // Refresh data without a full redirect if possible, 
+            // Refresh data without a full redirect if possible,
             // but redirecting works to clear the form.
             Response.Redirect("UserDashboard.aspx");
+        }
+        protected void lnkLogout_Click(object sender, EventArgs e)
+        {
+            // 1. Clear all session variables
+            Session.Clear();
+
+            // 2. Abandon the current session to destroy it on the server
+            Session.Abandon();
+
+            // 3. Force the browser to expire the session cookie
+            Response.Cookies.Add(new System.Web.HttpCookie("ASP.NET_SessionId", ""));
+
+            // 4. Send the user back to the login page
+            Response.Redirect("Login.aspx");
         }
     }
 }
