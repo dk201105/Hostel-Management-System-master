@@ -20,7 +20,7 @@ namespace HostelManagmentSystem
         {
             // 1. Get values from the HTML page
             string fullName = txtFullName.Text.Trim();
-            string email = txtEmail.Text.Trim();   // will be stored in UserInfo
+            string email = txtEmail.Text.Trim();  
             string password = txtPassword.Text.Trim();
             string confirmPass = txtConfirmPassword.Text.Trim();
             string role = ddlRole.SelectedValue;
