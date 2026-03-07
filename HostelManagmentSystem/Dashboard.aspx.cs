@@ -115,11 +115,16 @@ namespace HostelManagmentSystem
             {
                 SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM Items", conn);
                 DataTable dt = new DataTable();
-                da.Fill(dt);
-                rptItems.DataSource = dt;
-                rptItems.DataBind();
+                da.Fill(dt);    
+
+                // Match the ID "rptInventory" from your .aspx file
+                if (rptInventory != null)
+                {
+                    rptInventory.DataSource = dt;
+                    rptInventory.DataBind();
+                }
             }
-        }
+        }   
 
         protected void btnLogout_Click(object sender, EventArgs e)
         {

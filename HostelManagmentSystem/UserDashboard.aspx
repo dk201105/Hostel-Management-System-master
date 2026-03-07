@@ -3,125 +3,290 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>User Dashboard</title>
+    <title>User Dashboard | InvyWeb Style</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+        :root {
+            --primary-color: #186420;
+            --sidebar-bg: #0d4214;
+            --bg-light: #f8fafc;
+            --text-dark: #334155;
+            --border-color: #e2e8f0;
+        }
+
+        /* RESET & FULL PAGE STYLES */
+        html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', sans-serif; 
+            background-color: var(--bg-light); 
+            display: flex;
+            color: var(--text-dark);
+        }
+
+        /* SIDEBAR (Sticky Full Height) */
+        .sidebar {
+            width: 400px; 
+            background-color: var(--primary-color);
+            height: 100vh;
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .sidebar-header { padding: 30px 20px; font-weight: bold; font-size: 16px; letter-spacing: 1px; display: flex; align-items: center; }
+        .nav-menu { list-style: none; padding: 0; margin: 0; }
+        .nav-item { padding: 15px 25px; display: flex; align-items: center; cursor: pointer; transition: 0.3s; font-size: 14px; opacity: 0.8; }
+        .nav-item i { margin-right: 15px; width: 20px; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); opacity: 1; border-left: 4px solid #fff; }
+
+        /* MAIN CONTENT */
+        .main-wrapper {
+            margin-left: 400px; 
+            width: calc(100% - 240px); 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-light);
+        }
+
+        .top-nav {
+            background: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        /* PROFILE DROPDOWN (Click-based) */
+        .user-profile-wrap { position: relative; display: flex; align-items: center; gap: 15px; cursor: pointer; padding: 5px 10px; border-radius: 8px; transition: 0.2s; }
+        .user-profile-wrap:hover { background: #f1f5f9; }
         
-        /* HEADER */
-        .header { background: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
-        .header img { height: 50px; }
-        .user-info { text-align: right; }
-        .user-info h4 { margin: 0; color: #009933; }
-        .btn-alerts { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        .profile-dropdown {
+            position: absolute;
+            top: 110%;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            width: 150px;
+            display: none; 
+            overflow: hidden;
+        }
+        
+        .profile-dropdown.show { display: block; }
+
+        .dropdown-item { padding: 12px 15px; font-size: 14px; color: #ef4444; display: flex; align-items: center; gap: 10px; text-decoration: none; transition: 0.2s; }
+        .dropdown-item:hover { background: #fff1f2; }
+
+        .dashboard-container {
+            padding: 30px 40px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            flex: 1;
+        }
 
         /* STATS CARDS */
-        .stats-container { display: flex; gap: 20px; padding: 20px 40px; }
-        .card { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; }
-        .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
-        .grey { background: #aaa; } .green { background: #28a745; } .yellow { background: #ffc107; } .red { background: #dc3545; }
-        .card h3 { margin: 0; font-size: 24px; color: #333; }
-        .card p { margin: 0; color: #666; font-size: 12px; text-transform: uppercase; font-weight: bold; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: flex-start; }
+        .stat-card.border-green { border-bottom: 4px solid #10b981; }
+        .stat-card.border-red { border-bottom: 4px solid #ef4444; }
+        .stat-card.border-blue { border-bottom: 4px solid #3b82f6; }
+        .stat-card.border-grey { border-bottom: 4px solid #94a3b8; }
+        .stat-info p { margin: 0; color: #64748b; font-size: 13px; font-weight: 500; }
+        .stat-info h3 { margin: 5px 0; font-size: 24px; color: #1e293b; }
+        .stat-icon { font-size: 20px; color: var(--primary-color); opacity: 0.5; }
 
-        /* MAIN CONTENT GRID */
-        .main-container { display: flex; gap: 20px; padding: 0 40px 40px 40px; }
-        
-        /* LEFT COLUMN: ITEM LIST */
-        .item-list-section { flex: 2; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .search-bar { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; box-sizing: border-box; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
-        .item-name { font-weight: bold; width: 30%; }
-        .badge { padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
-        .bg-pink { background: #ffe6e6; color: #333; }
-        .bg-yellow { background: #fff3cd; color: #333; }
-        .btn-update-list { background: #009933; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        /* CONTENT GRID */
+        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+        .panel { background: white; border-radius: 12px; border: 1px solid var(--border-color); padding: 20px; }
+        .panel-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* RIGHT COLUMN: UPDATE FORM */
-        .update-section { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); height: fit-content; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn-submit { width: 100%; background: #009933; color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .custom-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+        .custom-table th { text-align: left; padding: 12px 8px; color: #64748b; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
+        .custom-table td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+
+        .badge-status { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; }
+        .status-safe { background: #dcfce7; color: #15803d; }
+        .status-critical { background: #fee2e2; color: #b91c1c; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #475569; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; box-sizing: border-box; }
         
-        /* NOTIFICATIONS BOX */
-        .notif-box { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-top: 20px; font-size: 13px; color: #0d47a1; }
-        .notif-box ul { padding-left: 20px; margin: 0; }
-        .notif-box li { margin-bottom: 5px; }
+        .btn-primary { background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: 600; cursor: pointer; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+
+        .notif-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin-top: 20px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <form id="form1" runat="server">
-        
-        <div class="header">
-            <button class="btn-alerts"><i class="fas fa-bell"></i> Alerts</button>
-            <div style="text-align:center;">
-                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/87/Women%27s_Christian_College%2C_Chennai_Logo.png/220px-Women%27s_Christian_College%2C_Chennai_Logo.png" alt="WCC Logo" />
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-hotel"></i> &nbsp; WCC INVENTORY
             </div>
-            <div class="user-info">
-                <p style="margin:0; font-size:12px; color:#666;">User Dashboard</p>
-                <asp:Label ID="lblFullName" runat="server" Text="XXXXXXX" Font-Bold="true" ForeColor="#009933" Font-Size="Large"></asp:Label>
+            <ul class="nav-menu">
+                <li class="nav-item active"><i class="fas fa-th-large"></i> Dashboard</li>
+            </ul>
+            <div style="margin-top:auto; padding: 20px; font-size: 10px; opacity: 0.5;">
+                &copy; 2026 Hostel Management
             </div>
         </div>
 
-        <div class="stats-container">
-            <div class="card"><span class="dot grey"></span><div><p>Total Products</p><asp:Label ID="lblTotal" runat="server" Text="0" Font-Size="24px"></asp:Label></div></div>
-            <div class="card"><span class="dot green"></span><div><p>Safe</p><asp:Label ID="lblSafe" runat="server" Text="0" Font-Size="24px"></asp:Label></div></div>
-            <div class="card"><span class="dot yellow"></span><div><p>Restock Soon</p><asp:Label ID="lblRestockSoon" runat="server" Text="0" Font-Size="24px"></asp:Label></div></div>
-            <div class="card"><span class="dot red"></span><div><p>Restock</p><asp:Label ID="lblRestock" runat="server" Text="0" Font-Size="24px"></asp:Label></div></div>
-        </div>
-
-        <div class="main-container">
-            
-            <div class="item-list-section">
-                <h3>Item List</h3>
-                <asp:TextBox ID="txtSearch" runat="server" CssClass="search-bar" placeholder="Search items..."></asp:TextBox>
-                
-                <div style="display:flex; justify-content:space-between; font-weight:bold; color:#888; border-bottom:1px solid #ddd; padding-bottom:10px; margin-bottom:10px;">
-                    <span style="width:30%">Item Name</span>
-                    <span style="width:20%">Amt Remaining</span>
-                    <span style="width:15%">Action</span>
-                </div>
-
-                <asp:Repeater ID="rptItems" runat="server" OnItemCommand="rptItems_ItemCommand">
-                    <ItemTemplate>
-                        <div class="item-row">
-                            <div class="item-name"><span class="badge bg-pink"><%# Eval("ItemName") %></span></div>
-                            <div style="width:20%"><%# Eval("Quantity") %>></div>
-                            <div style="width:15%">
-                                <asp:Button ID="btnSelect" runat="server" Text="UPDATE" CommandName="Select" CommandArgument='<%# Eval("ItemID") %>' CssClass="btn-update-list" />
-                            </div>
+        <div class="main-wrapper">
+            <div class="top-nav">
+                <div style="font-weight: 600; color: #64748b;">User Dashboard</div>
+                <div style="display: flex; align-items: center; gap: 25px;">
+                    <i class="far fa-bell" style="font-size: 20px; color: #64748b; cursor:pointer;"></i>
+                    <div class="user-profile-wrap" onclick="toggleProfileMenu(event)">
+                        <div style="text-align: right;">
+                            <asp:Label ID="lblFullName" runat="server" Text="User Name" Font-Bold="true" ForeColor="#1e293b"></asp:Label><br />
+                            <small style="color: #64748b;">USER</small>
                         </div>
-                    </ItemTemplate>
-                </asp:Repeater>
+                        <div style="width:40px; height:40px; background:var(--primary-color); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
+                            Profile
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size: 12px; color: #94a3b8;"></i>
+                        <div id="dropdownMenu" class="profile-dropdown">
+                            <asp:LinkButton ID="lnkLogout" runat="server" CssClass="dropdown-item" OnClick="lnkLogout_Click">
+                                <i class="fas fa-sign-out-alt"></i> Sign Out
+                            </asp:LinkButton>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="update-section">
-                <h3 style="margin-top:0;"><asp:Label ID="lblSelectedItem" runat="server" Text="Select an Item"></asp:Label></h3>
-                <asp:HiddenField ID="hfSelectedItemID" runat="server" />
+            <div class="dashboard-container">
+                <div class="stats-grid">
+                    <div class="stat-card border-grey">
+                        <div class="stat-info"><p>Total Products</p><h3><asp:Label ID="lblTotal" runat="server" Text="0"></asp:Label></h3></div>
+                        <i class="fas fa-boxes stat-icon"></i>
+                    </div>
+                    <div class="stat-card border-green">
+                        <div class="stat-info"><p>Safe Stock</p><h3><asp:Label ID="lblSafe" runat="server" Text="0"></asp:Label></h3></div>
+                        <i class="fas fa-check-circle stat-icon" style="color:#10b981"></i>
+                    </div>
+                    <div class="stat-card border-blue">
+                        <div class="stat-info"><p>Restock Soon</p><h3><asp:Label ID="lblRestockSoon" runat="server" Text="0"></asp:Label></h3></div>
+                        <i class="fas fa-clock stat-icon" style="color:#3b82f6"></i>
+                    </div>
+                    <div class="stat-card border-red">
+                        <div class="stat-info"><p>Critical Stock</p><h3><asp:Label ID="lblRestock" runat="server" Text="0"></asp:Label></h3></div>
+                        <i class="fas fa-exclamation-triangle stat-icon" style="color:#ef4444"></i>
+                    </div>
+                </div>
                 
-                <p style="font-size:12px; color:#666; font-weight:bold;">UPDATE INFORMATION</p>
+                <div class="content-grid">
+                    <div class="panel">
+                        <div class="panel-title">
+                            Item Inventory
+                            <asp:TextBox ID="txtSearch" runat="server" CssClass="form-control" placeholder="Search..." style="width: 180px; padding: 6px 12px;" onkeyup="filterInventoryTable()"></asp:TextBox>
+                        </div>
+                        <table class="custom-table" id="inventoryTable">
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <asp:Repeater ID="rptItems" runat="server" OnItemCommand="rptItems_ItemCommand">
+                                    <ItemTemplate>
+                                        <tr>
+                                            <td style="font-weight:600;"><%# Eval("ItemName") %></td>
+                                            <td><%# Eval("Quantity") %> Units</td>
+                                            <td>
+                                                <span class='badge-status <%# Convert.ToDecimal(Eval("Quantity")) < 10 ? "status-critical" : "status-safe" %>'>
+                                                    <%# Convert.ToDecimal(Eval("Quantity")) < 10 ? "LOW STOCK" : "IN STOCK" %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <asp:Button ID="btnSelect" runat="server" Text="Update" CommandName="Select" CommandArgument='<%# Eval("ItemID") %>' CssClass="btn-outline" />
+                                            </td>
+                                        </tr>
+                                    </ItemTemplate>
+                                </asp:Repeater>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <div class="form-group">
-                    <label>Amount Used:</label>
-                    <asp:TextBox ID="txtAmountUsed" runat="server" CssClass="form-control" placeholder="Enter amount (e.g. 50)"></asp:TextBox>
-                </div>
+                    <div class="panel">
+                        <div class="panel-title">Update Usage</div>
+                        <asp:Label ID="lblSelectedItem" runat="server" Text="Select an Item" Font-Size="13px" ForeColor="#64748b"></asp:Label>
+                        <asp:HiddenField ID="hfSelectedItemID" runat="server" />
+                        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0;" />
 
-                <div class="form-group">
-                    <label>Date Used:</label>
-                    <asp:TextBox ID="txtDateUsed" runat="server" TextMode="Date" CssClass="form-control"></asp:TextBox>
-                </div>
+                        <div class="form-group">
+                            <label>Amount Used</label>
+                            <asp:TextBox ID="txtAmountUsed" runat="server" CssClass="form-control" placeholder="Enter quantity"></asp:TextBox>
+                        </div>
 
-                <asp:Button ID="btnUpdateRecord" runat="server" Text="UPDATE RECORD" CssClass="btn-submit" OnClick="btnUpdateRecord_Click" />
+                        <div class="form-group">
+                            <label>Usage Date</label>
+                            <asp:TextBox ID="txtDateUsed" runat="server" TextMode="Date" CssClass="form-control"></asp:TextBox>
+                        </div>
 
-                <div class="notif-box">
-                    <strong>NOTIFICATIONS</strong>
-                    <ul>
-                        <li>Product needs restocking</li>
-                        <li>Product close to expiry</li>
-                    </ul>
+                        <asp:Button ID="btnUpdateRecord" runat="server" Text="Confirm Update" CssClass="btn-primary" OnClick="btnUpdateRecord_Click" />
+
+                        <div class="notif-box">
+                            <div style="font-weight: bold; font-size: 11px; color: #1e40af; text-transform:uppercase; margin-bottom:5px;">System Alerts</div>
+                            <ul style="margin: 0; padding-left: 15px; font-size: 12px; color: #1e40af; line-height:1.6;">
+                                <li>Low stock items are auto-flagged.</li>
+                                <li>Audit logs updated on confirmation.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </form>
+
+    <script>
+        function toggleProfileMenu(event) {
+            event.stopPropagation();
+            document.getElementById("dropdownMenu").classList.toggle("show");
+        }
+        window.onclick = function(event) {
+            var dropdown = document.getElementById("dropdownMenu");
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+
+        // Search Filter Logic
+        function filterInventoryTable() {
+            var input = document.getElementById('<%= txtSearch.ClientID %>');
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("inventoryTable");
+            var tr = table.getElementsByTagName("tr");
+
+            // Loop through all table rows (excluding the header)
+            for (var i = 1; i < tr.length; i++) {
+                var tdName = tr[i].getElementsByTagName("td")[0]; // Item Name column
+                if (tdName) {
+                    var txtValue = tdName.textContent || tdName.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
 </body>
 </html>

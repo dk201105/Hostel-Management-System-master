@@ -91,6 +91,7 @@
     <Content Include="banner-wcc.jpg" />
     <Content Include="Global.asax" />
     <Content Include="Login.aspx" />
+    <Content Include="logo.jpg" />
     <Content Include="Signup.aspx" />
     <Content Include="UserDashboard.aspx" />
     <Content Include="Web.config">
