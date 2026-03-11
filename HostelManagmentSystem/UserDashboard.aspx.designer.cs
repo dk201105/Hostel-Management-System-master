@@ -31,15 +31,6 @@ namespace HostelManagmentSystem {
         protected global::System.Web.UI.WebControls.Label lblFullName;
         
         /// <summary>
-        /// lnkLogout control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton lnkLogout;
-        
-        /// <summary>
         /// lblTotal control.
         /// </summary>
         /// <remarks>

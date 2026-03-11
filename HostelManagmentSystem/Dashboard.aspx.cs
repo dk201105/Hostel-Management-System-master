@@ -60,6 +60,27 @@ namespace HostelManagmentSystem
             }
         }
 
+        protected void btnUpdateStock_Click(object sender, EventArgs e)
+        {
+            int itemId = int.Parse(ddlItems.SelectedValue);
+            decimal addedQty = decimal.Parse(txtAddQty.Text);
+
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                // SQL to ADD the new quantity to the existing quantity
+                string query = "UPDATE Items SET Quantity = Quantity + @AddedQty WHERE ItemID = @ID";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@AddedQty", addedQty);
+                cmd.Parameters.AddWithValue("@ID", itemId);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            // Refresh to show new totals
+            Response.Redirect("Dashboard.aspx");
+        }
+
         protected void btnDelete_Click(object sender, EventArgs e)
         {
             // Get the ItemID from the CommandArgument of the clicked button
@@ -115,7 +136,7 @@ namespace HostelManagmentSystem
             {
                 SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM Items", conn);
                 DataTable dt = new DataTable();
-                da.Fill(dt);    
+                da.Fill(dt);
 
                 // Match the ID "rptInventory" from your .aspx file
                 if (rptInventory != null)
@@ -124,9 +145,41 @@ namespace HostelManagmentSystem
                     rptInventory.DataBind();
                 }
             }
-        }   
+        }
 
-        protected void btnLogout_Click(object sender, EventArgs e)
+     
+
+        private void FillItemsDropdown()
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                // We need ItemID for the value and ItemName for the text
+                string query = "SELECT ItemID, ItemName FROM Items ORDER BY ItemName ASC";
+                SqlCommand cmd = new SqlCommand(query, conn);
+
+                try
+                {
+                    conn.Open();
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    ddlItems.DataSource = reader;
+                    ddlItems.DataTextField = "ItemName"; // What the user sees
+                    ddlItems.DataValueField = "ItemID";   // What the code uses
+                    ddlItems.DataBind();
+
+                    // Add a default "Select" option at the top
+                    ddlItems.Items.Insert(0, new ListItem("-- Select Item --", ""));
+                }
+                catch (Exception ex)
+                {
+                    // Log error if needed
+                }
+            }
+        }
+
+
+
+        protected void lnkLogout_Click(object sender, EventArgs e)
         {
             Session.Abandon();
             Response.Redirect("Login.aspx");

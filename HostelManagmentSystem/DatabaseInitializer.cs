@@ -97,20 +97,45 @@ namespace HostelManagmentSystem
                         );
                     END");
 
-                // --- 5. ITEMS TABLE (Links to Suppliers) ---
+                // --- 5. ITEMS TABLE (Updated to match Dashboard.aspx.cs) ---
                 ExecuteQuery(conn, @"
                     IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Items]') AND type in (N'U'))
                     BEGIN
                         CREATE TABLE Items (
                             ItemID INT IDENTITY(1,1) PRIMARY KEY,
-                            CompanyID INT FOREIGN KEY REFERENCES Suppliers(CompanyID),
+                            CompanyID INT NULL, -- Made NULL because Dashboard doesn't provide it yet
                             ItemName NVARCHAR(100) NOT NULL,
                             ItemPrice DECIMAL(18, 2),
                             Quantity DECIMAL(18, 2),
+                            Unit NVARCHAR(20),
                             QuantityThreshold DECIMAL(18, 2),
-                            IsPerishable BIT DEFAULT 0,
-                            ExpiryDate DATE NULL
+                            Category NVARCHAR(100), -- Added this to match your Dashboard.aspx.cs
                         );
+                    END");
+               
+                // --- 6. SEED INVENTORY ITEMS (Add this after table creation) ---
+                ExecuteQuery(conn, @"
+                    IF NOT EXISTS (SELECT 1 FROM Items WHERE ItemName = 'Toor Dal')
+                    BEGIN
+                        INSERT INTO Items (ItemName, Quantity, QuantityThreshold, Category) VALUES
+                        ('Toor Dal', 0, 20, 'Grains'), ('Urad Dal', 0, 30, 'Grains'),
+                        ('Moong Dal', 0, 10, 'Grains'), ('Bengal Gram', 0, 10, 'Grains'),
+                        ('Black Channa', 0, 5, 'Grains'), ('Ground Nut', 0, 10, 'Grains'),
+                        ('Green Gram', 0, 5, 'Grains'), ('Green Peas', 0, 5, 'Grains'),
+                        ('Rava', 0, 10, 'Grains'), ('Wheat Flour', 0, 50, 'Flours'),
+                        ('Maida', 0, 10, 'Flours'), ('Corn Flour', 0, 5, 'Flours'),
+                        ('Chilli Powder', 0, 2, 'Masala Powders'), ('Coriander Powder', 0, 1, 'Masala Powders'),
+                        ('Turmeric', 0, 2, 'Masala Powders'), ('Mustard', 0, 5, 'Spices'),
+                        ('Fenugreek', 0, 2, 'Spices'), ('Fennel', 0, 2, 'Spices'),
+                        ('Cumin', 0, 1, 'Spices'), ('Pepper', 0, 2, 'Spices'),
+                        ('Cloves', 0, 0.5, 'Spices'), ('Dry Chilli', 0, 5, 'Spices'),
+                        ('Pattai', 0, 0.5, 'Spices'), ('Annachi Poo', 0, 0.2, 'Spices'),
+                        ('Elachi (Cardamom)', 0, 0.2, 'Spices'), ('Tomato Sauce', 0, 10, 'Sauces'),
+                        ('Soya Sauce', 0, 5, 'Sauces'), ('Vim Bar', 0, 50, 'Detergents'),
+                        ('Tide', 0, 50, 'Detergents'), ('Tamarind', 0, 10, 'Essentials'),
+                        ('Coffee Powder', 0, 5, 'Essentials'), ('Tea Powder', 0, 10, 'Essentials'),
+                        ('Garlic', 0, 10, 'Essentials'), ('Salt (table)', 0, 50, 'Essentials'),
+                        ('Rock Salt', 0, 30, 'Essentials');
                     END");
 
                 // --- 6. ORDERS TABLE (Links to Users) ---

@@ -5,6 +5,11 @@ using System.Data.SqlClient;
 using System.Web;
 using System.Configuration;
 using System.Web.UI.WebControls;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+using Twilio.Types;
+
+
 
 namespace HostelManagmentSystem
 {
@@ -30,6 +35,68 @@ namespace HostelManagmentSystem
                 LoadInventory();
                 txtDateUsed.Text = DateTime.Now.ToString("yyyy-MM-dd");
             }
+        }
+
+        private void SendAutomatedWhatsApp(string itemName, decimal remainingQty)
+        {
+            // 1. Your Twilio Credentials
+            string accountSid = "AC90099bd76e3803b95a5d734aa5eba423";
+            string authToken = "30f40ae0aa9dc79552c463678c64c14a";
+
+            TwilioClient.Init(accountSid, authToken);
+
+            try
+            {
+                var message = MessageResource.Create(
+                    // This is the Twilio Sandbox Number
+                    from: new PhoneNumber("whatsapp:+14155238886"),
+
+                    // Your Admin Mobile Number
+                    to: new PhoneNumber("whatsapp:+918300013213"),
+
+                    body: $"🚨 *INVENTORY ALERT*\n\nItem: {itemName}\nStatus: LOW STOCK\nRemaining: {remainingQty}\n\n_Update sent from WCC System_"
+                );
+            }
+            catch (Exception)
+            {
+                // Handle connection errors here
+            }
+        }
+
+        protected void btnUpdateRecord_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(hfSelectedItemID.Value) || string.IsNullOrEmpty(txtAmountUsed.Text)) return;
+
+            string itemId = hfSelectedItemID.Value;
+            string itemName = lblSelectedItem.Text;
+            decimal amountUsed = decimal.Parse(txtAmountUsed.Text);
+
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string query = @"UPDATE Items SET Quantity = Quantity - @Used 
+                         OUTPUT INSERTED.Quantity, INSERTED.QuantityThreshold
+                         WHERE ItemID = @ID";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Used", amountUsed);
+                cmd.Parameters.AddWithValue("@ID", itemId);
+
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    decimal newQty = Convert.ToDecimal(reader["Quantity"]);
+                    decimal threshold = Convert.ToDecimal(reader["QuantityThreshold"]);
+
+                    if (newQty <= threshold)
+                    {
+                        // This happens in the background!
+                        SendAutomatedWhatsApp(itemName, newQty);
+                    }
+                }
+            }
+            Response.Redirect("UserDashboard.aspx");
         }
 
 
@@ -59,6 +126,7 @@ namespace HostelManagmentSystem
             }
         }
 
+      
         protected void LoadInventory()
         {
             using (SqlConnection conn = new SqlConnection(connString))
@@ -94,32 +162,7 @@ namespace HostelManagmentSystem
             }
         }
 
-        protected void btnUpdateRecord_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(hfSelectedItemID.Value) || string.IsNullOrEmpty(txtAmountUsed.Text)) return;
 
-            int itemId = Convert.ToInt32(hfSelectedItemID.Value);
-            decimal amountUsed;
-
-            // Using decimal to match your SQL 'decimal(18,2)' type
-            if (!decimal.TryParse(txtAmountUsed.Text, out amountUsed)) return;
-
-            using (SqlConnection conn = new SqlConnection(connString))
-            {
-                // Updated table name to 'Items'
-                string query = "UPDATE Items SET Quantity = Quantity - @Used WHERE ItemID = @ID";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Used", amountUsed);
-                cmd.Parameters.AddWithValue("@ID", itemId);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
-            }
-
-            // Refresh data without a full redirect if possible,
-            // but redirecting works to clear the form.
-            Response.Redirect("UserDashboard.aspx");
-        }
         protected void lnkLogout_Click(object sender, EventArgs e)
         {
             // 1. Clear all session variables

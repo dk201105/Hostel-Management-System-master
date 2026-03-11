@@ -55,7 +55,7 @@
         <div class="header">
             <button class="btn-alerts"><i class="fas fa-bell"></i> Alerts</button>
             <div style="text-align:center;">
-                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/87/Women%27s_Christian_College%2C_Chennai_Logo.png/220px-Women%27s_Christian_College%2C_Chennai_Logo.png" alt="WCC Logo" />
+                <img src="wcc_icon.png" alt="WCC Logo" />
             </div>
             <div class="user-info">
                 <p style="margin:0; font-size:12px; color:#666;">User Dashboard</p>
@@ -88,7 +88,6 @@
                         <div class="item-row">
                             <div class="item-name"><span class="badge bg-pink"><%# Eval("ItemName") %></span></div>
                             <div style="width:20%"><%# Eval("Quantity") %> <%# Eval("Unit") %></div>
-                            <div style="width:30%"><%# Eval("ExpiryDate", "{0:dd MMM yyyy}") %></div>
                             <div style="width:15%">
                                 <asp:Button ID="btnSelect" runat="server" Text="UPDATE" CommandName="Select" CommandArgument='<%# Eval("ItemID") %>' CssClass="btn-update-list" />
                             </div>
