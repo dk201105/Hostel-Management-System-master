@@ -3,6 +3,11 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Web.UI.WebControls;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
+using iText.Kernel.Geom;
 
 namespace HostelManagmentSystem
 {
@@ -14,6 +19,27 @@ namespace HostelManagmentSystem
         {
             if (!IsPostBack)
             {
+                // Check if the Admin is logged in
+                if (Session["FullName"] != null)
+                {
+                    string fullName = Session["FullName"].ToString();
+
+                    // 1. Set the Full Name Label
+                    lblAdminName.Text = fullName;
+
+                    // 2. Extract the first letter for the Initial Circle
+                    if (!string.IsNullOrEmpty(fullName))
+                    {
+                        litAdminInitial.Text = fullName.Substring(0, 1).ToUpper();
+                    }
+                }
+                else
+                {
+                    // If no session, send back to login
+                    Response.Redirect("Login.aspx");
+                }
+
+                BindDropdown();
                 LoadStats();
                 LoadInventory();
             }
@@ -35,6 +61,66 @@ namespace HostelManagmentSystem
             return "<span class='status-badge status-good'>Safe</span>";
         }
 
+        protected void btnDownloadReport_Click(object sender, EventArgs e)
+        {
+            string selectedMonth = txtReportMonth.Text;
+            if (string.IsNullOrEmpty(selectedMonth)) return;
+
+            Response.Clear();
+            Response.ContentType = "application/pdf";
+            Response.AddHeader("content-disposition", $"attachment;filename=WCC_Report_{selectedMonth}.pdf");
+
+            using (iText.Kernel.Pdf.PdfWriter writer = new iText.Kernel.Pdf.PdfWriter(Response.OutputStream))
+            {
+                using (iText.Kernel.Pdf.PdfDocument pdf = new iText.Kernel.Pdf.PdfDocument(writer))
+                {
+                    iText.Layout.Document document = new iText.Layout.Document(pdf, iText.Kernel.Geom.PageSize.A4);
+
+                    // Header - Using a bold font explicitly to bypass SetBold errors
+                    iText.Kernel.Font.PdfFont boldFont = iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD);
+
+                    document.Add(new iText.Layout.Element.Paragraph("WOMEN'S CHRISTIAN COLLEGE")
+                        .SetFont(boldFont)
+                        .SetFontSize(18)
+                        .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
+
+                    document.Add(new iText.Layout.Element.Paragraph("Hostel Mess Monthly Inventory Report")
+                        .SetFontSize(14)
+                        .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
+
+                    // Table setup
+                    iText.Layout.Element.Table table = new iText.Layout.Element.Table(iText.Layout.Properties.UnitValue.CreatePercentArray(new float[] { 4, 2, 2, 2 })).UseAllAvailableWidth();
+
+                    // Header Cells
+                    table.AddHeaderCell(new iText.Layout.Element.Cell().Add(new iText.Layout.Element.Paragraph("Item Name").SetFont(boldFont)));
+                    table.AddHeaderCell(new iText.Layout.Element.Cell().Add(new iText.Layout.Element.Paragraph("Qty").SetFont(boldFont)));
+                    table.AddHeaderCell(new iText.Layout.Element.Cell().Add(new iText.Layout.Element.Paragraph("Price").SetFont(boldFont)));
+                    table.AddHeaderCell(new iText.Layout.Element.Cell().Add(new iText.Layout.Element.Paragraph("Date").SetFont(boldFont)));
+
+                    using (SqlConnection conn = new SqlConnection(connString))
+                    {
+                        string query = "SELECT ItemName, Quantity, ItemPrice, Category FROM Items WHERE Category LIKE @Month + '%'";
+                        SqlCommand cmd = new SqlCommand(query, conn);
+                        cmd.Parameters.AddWithValue("@Month", selectedMonth);
+                        conn.Open();
+                        SqlDataReader reader = cmd.ExecuteReader();
+
+                        while (reader.Read())
+                        {
+                            table.AddCell(new iText.Layout.Element.Paragraph(reader["ItemName"].ToString()));
+                            table.AddCell(new iText.Layout.Element.Paragraph(reader["Quantity"].ToString()));
+                            table.AddCell(new iText.Layout.Element.Paragraph(reader["ItemPrice"].ToString()));
+                            table.AddCell(new iText.Layout.Element.Paragraph(reader["Category"].ToString()));
+                        }
+                    }
+
+                    document.Add(table);
+                    document.Close();
+                }
+            }
+            Response.End();
+        }
+
         protected void LoadStats()
         {
             using (SqlConnection conn = new SqlConnection(connString))
@@ -53,21 +139,23 @@ namespace HostelManagmentSystem
                 if (reader.Read())
                 {
                     lblTotal.Text = reader["Total"].ToString();
-                    lblSafe.Text = reader["Safe"].ToString() ?? "0";
-                    lblRestockSoon.Text = reader["Soon"].ToString() ?? "0";
-                    lblRestock.Text = reader["Restock"].ToString() ?? "0";
+                    lblSafe.Text = reader["Safe"]?.ToString() ?? "0";
+                    lblRestockSoon.Text = reader["Soon"]?.ToString() ?? "0";
+                    lblRestock.Text = reader["Restock"]?.ToString() ?? "0";
                 }
             }
         }
 
+        // Consolidated Update Stock Method
         protected void btnUpdateStock_Click(object sender, EventArgs e)
         {
+            if (ddlItems.SelectedValue == "0" || string.IsNullOrEmpty(txtAddQty.Text)) return;
+
             int itemId = int.Parse(ddlItems.SelectedValue);
             decimal addedQty = decimal.Parse(txtAddQty.Text);
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // SQL to ADD the new quantity to the existing quantity
                 string query = "UPDATE Items SET Quantity = Quantity + @AddedQty WHERE ItemID = @ID";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@AddedQty", addedQty);
@@ -76,57 +164,58 @@ namespace HostelManagmentSystem
                 conn.Open();
                 cmd.ExecuteNonQuery();
             }
-
-            // Refresh to show new totals
             Response.Redirect("Dashboard.aspx");
         }
 
         protected void btnDelete_Click(object sender, EventArgs e)
         {
-            // Get the ItemID from the CommandArgument of the clicked button
             LinkButton btn = (LinkButton)sender;
             int itemId = Convert.ToInt32(btn.CommandArgument);
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // SQL query to remove the item from the Items table
                 string query = "DELETE FROM Items WHERE ItemID = @ID";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ID", itemId);
 
                 conn.Open();
                 cmd.ExecuteNonQuery();
-                conn.Close();
             }
-
-            // Refresh the page to show the updated list
             Response.Redirect("Dashboard.aspx");
         }
 
+        // Consolidated Save New Item Method
+
         protected void btnSaveNewItem_Click(object sender, EventArgs e)
         {
-            // Validate inputs
             if (string.IsNullOrWhiteSpace(txtNewItemName.Text)) return;
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // SQL Insert statement matching your schema
                 string query = @"INSERT INTO Items (ItemName, Quantity, QuantityThreshold, ItemPrice, Category) 
-                         VALUES (@Name, @Qty, @Threshold, @Price, @Date)";
+                         VALUES (@Name, @Qty, @Threshold, @Price, @Category)";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
+
+                // 1. Get the Threshold
+                decimal threshold = decimal.TryParse(txtNewThreshold.Text, out decimal t) ? t : 0;
+
+                // 2. Get the Qty, but DEFAULT to threshold if Qty is 0 or empty
+                decimal initialQty = decimal.TryParse(txtNewQty.Text, out decimal q) ? q : 0;
+                if (initialQty == 0)
+                {
+                    initialQty = threshold;
+                }
+
                 cmd.Parameters.AddWithValue("@Name", txtNewItemName.Text.Trim());
-                cmd.Parameters.AddWithValue("@Qty", decimal.Parse(txtNewQty.Text));
-                cmd.Parameters.AddWithValue("@Threshold", decimal.Parse(txtNewThreshold.Text));
-                cmd.Parameters.AddWithValue("@Price", decimal.Parse(txtNewPrice.Text));
-                cmd.Parameters.AddWithValue("@Date", DateTime.Now); // Setting current date for Category column
+                cmd.Parameters.AddWithValue("@Qty", initialQty);
+                cmd.Parameters.AddWithValue("@Threshold", threshold);
+                cmd.Parameters.AddWithValue("@Price", decimal.TryParse(txtNewPrice.Text, out decimal p) ? p : 0);
+                cmd.Parameters.AddWithValue("@Category", DateTime.Now.ToString("yyyy-MM-dd"));
 
                 conn.Open();
                 cmd.ExecuteNonQuery();
-                conn.Close();
             }
-
-            // Refresh the page to show the new item in the list and update stats
             Response.Redirect("Dashboard.aspx");
         }
 
@@ -138,7 +227,6 @@ namespace HostelManagmentSystem
                 DataTable dt = new DataTable();
                 da.Fill(dt);
 
-                // Match the ID "rptInventory" from your .aspx file
                 if (rptInventory != null)
                 {
                     rptInventory.DataSource = dt;
@@ -147,37 +235,22 @@ namespace HostelManagmentSystem
             }
         }
 
-     
-
-        private void FillItemsDropdown()
+        private void BindDropdown()
         {
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // We need ItemID for the value and ItemName for the text
                 string query = "SELECT ItemID, ItemName FROM Items ORDER BY ItemName ASC";
                 SqlCommand cmd = new SqlCommand(query, conn);
 
-                try
-                {
-                    conn.Open();
-                    SqlDataReader reader = cmd.ExecuteReader();
+                conn.Open();
+                ddlItems.DataSource = cmd.ExecuteReader();
+                ddlItems.DataTextField = "ItemName";
+                ddlItems.DataValueField = "ItemID";
+                ddlItems.DataBind();
 
-                    ddlItems.DataSource = reader;
-                    ddlItems.DataTextField = "ItemName"; // What the user sees
-                    ddlItems.DataValueField = "ItemID";   // What the code uses
-                    ddlItems.DataBind();
-
-                    // Add a default "Select" option at the top
-                    ddlItems.Items.Insert(0, new ListItem("-- Select Item --", ""));
-                }
-                catch (Exception ex)
-                {
-                    // Log error if needed
-                }
+                ddlItems.Items.Insert(0, new System.Web.UI.WebControls.ListItem("-- Select Item --", "0"));
             }
         }
-
-
 
         protected void lnkLogout_Click(object sender, EventArgs e)
         {

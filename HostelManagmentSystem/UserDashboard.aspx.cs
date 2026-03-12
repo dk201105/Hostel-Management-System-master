@@ -54,7 +54,7 @@ namespace HostelManagmentSystem
                     // Your Admin Mobile Number
                     to: new PhoneNumber("whatsapp:+918300013213"),
 
-                    body: $"🚨 *INVENTORY ALERT*\n\nItem: {itemName}\nStatus: LOW STOCK\nRemaining: {remainingQty}\n\n_Update sent from WCC System_"
+                    body: $"🚨 *INVENTORY ALERT*\n\nItem: {itemName}\nStatus: LOW STOCK\nRemaining: {remainingQty}\n\n_Update sent from WCC Mess Inventory System_"
                 );
             }
             catch (Exception)
@@ -65,14 +65,31 @@ namespace HostelManagmentSystem
 
         protected void btnUpdateRecord_Click(object sender, EventArgs e)
         {
+            lblError.Text = ""; // Clear existing errors
+
             if (string.IsNullOrEmpty(hfSelectedItemID.Value) || string.IsNullOrEmpty(txtAmountUsed.Text)) return;
 
             string itemId = hfSelectedItemID.Value;
-            string itemName = lblSelectedItem.Text;
             decimal amountUsed = decimal.Parse(txtAmountUsed.Text);
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
+                // 1. Fetch current quantity FIRST
+                string checkQuery = "SELECT Quantity FROM Items WHERE ItemID = @ID";
+                SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
+                checkCmd.Parameters.AddWithValue("@ID", itemId);
+                conn.Open();
+
+                decimal currentQty = Convert.ToDecimal(checkCmd.ExecuteScalar() ?? 0);
+
+                // 2. STOPS the negative value
+                if (amountUsed > currentQty)
+                {
+                    lblError.Text = "❌ Error: Cannot use more than available stock!";
+                    return;
+                }
+
+                // 3. Only then proceed with subtraction
                 string query = @"UPDATE Items SET Quantity = Quantity - @Used 
                          OUTPUT INSERTED.Quantity, INSERTED.QuantityThreshold
                          WHERE ItemID = @ID";
@@ -81,18 +98,11 @@ namespace HostelManagmentSystem
                 cmd.Parameters.AddWithValue("@Used", amountUsed);
                 cmd.Parameters.AddWithValue("@ID", itemId);
 
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-
-                if (reader.Read())
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    decimal newQty = Convert.ToDecimal(reader["Quantity"]);
-                    decimal threshold = Convert.ToDecimal(reader["QuantityThreshold"]);
-
-                    if (newQty <= threshold)
+                    if (reader.Read())
                     {
-                        // This happens in the background!
-                        SendAutomatedWhatsApp(itemName, newQty);
+                        // Trigger WhatsApp if needed
                     }
                 }
             }

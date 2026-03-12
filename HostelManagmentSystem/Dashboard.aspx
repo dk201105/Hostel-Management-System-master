@@ -100,10 +100,11 @@
         box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         width: 150px;
         display: none; 
+        z-index: 9999;
         overflow: hidden;
     }
         
-    .profile-dropdown.show { display: block; }
+    .profile-dropdown.show { display: block !important; }
 
     .dropdown-item { padding: 12px 15px; font-size: 14px; color: #ef4444; display: flex; align-items: center; gap: 10px; text-decoration: none; transition: 0.2s; }
     .dropdown-item:hover { background: #fff1f2; }
@@ -215,6 +216,49 @@
         color:white;
     }
 
+    /* MODAL CONTAINER FIX */
+    .modal-content {
+        background: white; 
+        width: 450px; 
+        padding: 35px; 
+        border-radius: 12px; 
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+    }
+
+    /* AESTHETIC DROPDOWN & INPUTS */
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        margin-top: 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #334155;
+        background-color: #ffffff;
+        transition: all 0.2s ease-in-out;
+        appearance: none; /* Removes default OS styling for a custom look */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='Length19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1em;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #186420;
+        box-shadow: 0 0 0 3px rgba(24, 100, 32, 0.1);
+    }
+
+    .form-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
     </style>
 </head>
 
@@ -241,17 +285,22 @@
                     <i class="far fa-bell" style="font-size: 20px; color: #64748b; cursor:pointer;"></i>
                     <div class="user-profile-wrap" onclick="toggleProfileMenu(event)">
                         <div style="text-align: right;">
-                            <asp:Label ID="lblFullName" runat="server" Text="User Name" Font-Bold="true" ForeColor="#1e293b"></asp:Label><br />
+                            <asp:Label ID="lblAdminName" runat="server" Text="User Name" Font-Bold="true" ForeColor="#1e293b"></asp:Label><br />
                             <small style="color: #64748b;">ADMIN</small>
                         </div>
-                        <div style="width:40px; height:40px; background:var(--primary-color); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">P</div>
+
+                        <div style="width:40px; height:40px; background:var(--primary-color); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
+                            <asp:Literal ID="litAdminInitial" runat="server">P</asp:Literal>
+                        </div>
+
                         <i class="fas fa-chevron-down" style="font-size: 12px; color: #94a3b8;"></i>
+                        </div>
+
                         <div id="dropdownMenu" class="profile-dropdown">
-                            <asp:LinkButton ID="lnkLogout" runat="server" CssClass="dropdown-item" OnClick="lnkLogout_Click">
+                            <asp:LinkButton ID="lnkLogout" runat="server" CssClass="dropdown-item" OnClick="lnkLogout_Click" style="text-decoration:none;">
                                 <i class="fas fa-sign-out-alt"></i> Sign Out
                             </asp:LinkButton>
                         </div>
-                    </div>
                 </div>
             </div>
 
@@ -343,22 +392,25 @@
                 </div>
             </div>
 
-            <div id="updateModal" class="modal-content" style="display:none; background:white; width:450px; padding:30px; border-radius:12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+            <div id="updateModal" class="modal-content">
                 <div style="text-align:center; margin-bottom:20px;">
                     <i class="fas fa-truck-loading" style="font-size:24px; color:#186420;"></i>
                     <h3 style="margin:0; font-weight:600; color:#1e293b;">Update Stock Level</h3>
                 </div>
                 <div style="margin-bottom:15px;">
-                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:5px;">Select Item</label>
-                    <asp:DropDownList ID="ddlItems" runat="server" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></asp:DropDownList>
+                    <label>Select Item</label>
+                    <asp:DropDownList ID="ddlItems" runat="server" CssClass="form-control" 
+                        DataTextField="ItemName" DataValueField="ItemID">
+                    </asp:DropDownList>
                 </div>
                 <div style="margin-bottom:20px;">
-                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:5px;">Quantity to Add (+)</label>
-                    <asp:TextBox ID="txtAddQty" runat="server" TextMode="Number" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></asp:TextBox>
+                    <label>Quantity to Add (+)</label>
+                    <asp:TextBox ID="txtAddQty" runat="server" TextMode="Number" CssClass="form-control"></asp:TextBox>
                 </div>
                 <div style="text-align:right; gap:10px; display:flex; justify-content:flex-end;">
-                    <button type="button" onclick="closeAllModals()" style="padding:10px 20px; border-radius:8px; border:1px solid #cbd5e1; background:white; cursor:pointer;">Cancel</button>
-                    <asp:Button ID="btnUpdateStock" runat="server" Text="Update Stock" OnClick="btnUpdateStock_Click" style="padding:10px 20px; border-radius:8px; border:none; background:#186420; color:white; cursor:pointer; font-weight:600;" />
+                    <button type="button" onclick="closeAllModals()">Cancel</button>
+                    <asp:Button ID="btnUpdateStock" runat="server" Text="Update Stock" 
+                        OnClick="btnUpdateStock_Click" CssClass="task-btn" style="background:#186420; color:white;" />
                 </div>
             </div>
 
@@ -369,7 +421,7 @@
                 <asp:TextBox ID="txtReportMonth" runat="server" TextMode="Month" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></asp:TextBox>
                 <div style="text-align:right; margin-top:20px;">
                     <button type="button" onclick="closeAllModals()" style="padding:10px 20px; border-radius:8px; border:1px solid #cbd5e1; background:white; cursor:pointer;">Cancel</button>
-                    <asp:Button ID="btnDownloadReport" runat="server" Text="Generate PDF" style="padding:10px 20px; border-radius:8px; border:none; background:#186420; color:white; cursor:pointer;" />
+                    <asp:Button ID="btnDownloadReport" runat="server" Text="Generate PDF" OnClick="btnDownloadReport_Click" style="padding:10px 20px; border-radius:8px; border:none; background:#186420; color:white; cursor:pointer;" />
                 </div>
             </div>
         </div>
@@ -401,6 +453,21 @@
                 closeAllModals();
             }
         }
+
+        // This script syncs the Threshold value to the Initial Qty box automatically
+        document.addEventListener('DOMContentLoaded', function () {
+            const thresholdInput = document.getElementById('<%= txtNewThreshold.ClientID %>');
+            const qtyInput = document.getElementById('<%= txtNewQty.ClientID %>');
+
+            if (thresholdInput && qtyInput) {
+                thresholdInput.addEventListener('input', function () {
+                    // Automatically fill Qty if it's currently empty or 0
+                    if (qtyInput.value === "" || qtyInput.value === "0") {
+                        qtyInput.value = this.value;
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
