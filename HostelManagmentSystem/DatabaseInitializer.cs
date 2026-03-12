@@ -190,6 +190,19 @@ namespace HostelManagmentSystem
                             QuantityBought DECIMAL(18, 2)
                         );
                     END");
+                // --- NEW: INVENTORY TRANSACTIONS TABLE ---
+                ExecuteQuery(conn, @"
+                    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[InventoryTransactions]') AND type in (N'U'))
+                    BEGIN
+                        CREATE TABLE InventoryTransactions (
+                            TransactionID INT IDENTITY(1,1) PRIMARY KEY,
+                            ItemID INT FOREIGN KEY REFERENCES Items(ItemID),
+                            ItemName NVARCHAR(100),
+                            ChangeAmount DECIMAL(18, 2), -- Positive for Admin add, Negative for User use
+                            TransactionDate DATETIME DEFAULT GETDATE(),
+                            TransactionType NVARCHAR(20) -- 'Stock Add' or 'Usage'
+                        );
+                    END");
             }
         }
 

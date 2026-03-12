@@ -71,6 +71,7 @@ namespace HostelManagmentSystem
 
         protected void btnUpdateRecord_Click(object sender, EventArgs e)
         {
+            DateTime dateUsed = DateTime.Parse(txtDateUsed.Text);
             lblError.Text = ""; // Clear existing errors
 
             if (string.IsNullOrEmpty(hfSelectedItemID.Value) || string.IsNullOrEmpty(txtAmountUsed.Text))
@@ -125,6 +126,15 @@ namespace HostelManagmentSystem
                         }
                     }
                 }
+                string logQuery = @"INSERT INTO InventoryTransactions (ItemID, ItemName, ChangeAmount, TransactionDate, TransactionType) 
+                            VALUES (@ID, @Name, @Amount, @Date, 'Usage')";
+
+                SqlCommand logCmd = new SqlCommand(logQuery, conn);
+                logCmd.Parameters.AddWithValue("@ID", itemId);
+                logCmd.Parameters.AddWithValue("@Name", itemName);
+                logCmd.Parameters.AddWithValue("@Amount", -amountUsed); // Negative for usage
+                logCmd.Parameters.AddWithValue("@Date", dateUsed);
+                logCmd.ExecuteNonQuery();
             }
             // Refresh to update the list and stats
             Response.Redirect("UserDashboard.aspx");

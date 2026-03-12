@@ -99,7 +99,9 @@ namespace HostelManagmentSystem
 
                     using (SqlConnection conn = new SqlConnection(connString))
                     {
-                        string query = "SELECT ItemName, Quantity, ItemPrice, Category FROM Items WHERE Category LIKE @Month + '%'";
+                        string query = @"SELECT ItemName, ABS(ChangeAmount) as Quantity, TransactionType, TransactionDate 
+                        FROM InventoryTransactions 
+                        WHERE FORMAT(TransactionDate, 'yyyy-MM') = @Month";
                         SqlCommand cmd = new SqlCommand(query, conn);
                         cmd.Parameters.AddWithValue("@Month", selectedMonth);
                         conn.Open();
@@ -107,10 +109,10 @@ namespace HostelManagmentSystem
 
                         while (reader.Read())
                         {
-                            table.AddCell(new iText.Layout.Element.Paragraph(reader["ItemName"].ToString()));
-                            table.AddCell(new iText.Layout.Element.Paragraph(reader["Quantity"].ToString()));
-                            table.AddCell(new iText.Layout.Element.Paragraph(reader["ItemPrice"].ToString()));
-                            table.AddCell(new iText.Layout.Element.Paragraph(reader["Category"].ToString()));
+                            table.AddCell(new Paragraph(reader["ItemName"].ToString()));
+                            table.AddCell(new Paragraph(reader["Quantity"].ToString()));
+                            table.AddCell(new Paragraph(reader["TransactionType"].ToString()));
+                            table.AddCell(new Paragraph(Convert.ToDateTime(reader["TransactionDate"]).ToString("dd/MM/yyyy")));
                         }
                     }
 
@@ -153,16 +155,33 @@ namespace HostelManagmentSystem
 
             int itemId = int.Parse(ddlItems.SelectedValue);
             decimal addedQty = decimal.Parse(txtAddQty.Text);
+            string itemName = ddlItems.SelectedItem.Text;
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                string query = "UPDATE Items SET Quantity = Quantity + @AddedQty WHERE ItemID = @ID";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@AddedQty", addedQty);
-                cmd.Parameters.AddWithValue("@ID", itemId);
-
                 conn.Open();
-                cmd.ExecuteNonQuery();
+                SqlTransaction trans = conn.BeginTransaction();
+                try
+                {
+                    // 1. Update master quantity
+                    string updateQuery = "UPDATE Items SET Quantity = ISNULL(Quantity, 0) + @AddedQty WHERE ItemID = @ID";
+                    SqlCommand cmd1 = new SqlCommand(updateQuery, conn, trans);
+                    cmd1.Parameters.AddWithValue("@AddedQty", addedQty);
+                    cmd1.Parameters.AddWithValue("@ID", itemId);
+                    cmd1.ExecuteNonQuery();
+
+                    // 2. Record the transaction with the DATE
+                    string logQuery = @"INSERT INTO InventoryTransactions (ItemID, ItemName, ChangeAmount, TransactionType) 
+                                VALUES (@ID, @Name, @Amount, 'Stock Add')";
+                    SqlCommand cmd2 = new SqlCommand(logQuery, conn, trans);
+                    cmd2.Parameters.AddWithValue("@ID", itemId);
+                    cmd2.Parameters.AddWithValue("@Name", itemName);
+                    cmd2.Parameters.AddWithValue("@Amount", addedQty);
+                    cmd2.ExecuteNonQuery();
+
+                    trans.Commit();
+                }
+                catch { trans.Rollback(); }
             }
             Response.Redirect("Dashboard.aspx");
         }
