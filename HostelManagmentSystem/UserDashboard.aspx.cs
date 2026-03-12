@@ -20,7 +20,6 @@ namespace HostelManagmentSystem
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            // SECURITY: If the session is empty, the user is not logged in.
             if (Session["FullName"] == null)
             {
                 Response.Redirect("Login.aspx");
@@ -28,20 +27,25 @@ namespace HostelManagmentSystem
 
             if (!IsPostBack)
             {
-                // Set the label to the user's name from the session
-                lblFullName.Text = Session["FullName"].ToString();
+                string fullName = Session["FullName"].ToString();
+                lblFullName.Text = fullName;
+
+                // NEW LOGIC: Extract the first letter and make it Uppercase
+                if (!string.IsNullOrEmpty(fullName))
+                {
+                    litUserInitial.Text = fullName.Substring(0, 1).ToUpper();
+                }
 
                 LoadStats();
                 LoadInventory();
-                txtDateUsed.Text = DateTime.Now.ToString("yyyy-MM-dd");
             }
         }
 
         private void SendAutomatedWhatsApp(string itemName, decimal remainingQty)
         {
             // 1. Your Twilio Credentials
-            string accountSid = "AC90099bd76e3803b95a5d734aa5eba423";
-            string authToken = "30f40ae0aa9dc79552c463678c64c14a";
+            string accountSid = "AC90099bd76e3803b95a5d734aa5eba423".Trim();
+            string authToken = "e984ff3b678409ddf76688a1b0e56918".Trim();
 
             TwilioClient.Init(accountSid, authToken);
 
@@ -56,10 +60,12 @@ namespace HostelManagmentSystem
 
                     body: $"🚨 *INVENTORY ALERT*\n\nItem: {itemName}\nStatus: LOW STOCK\nRemaining: {remainingQty}\n\n_Update sent from WCC Mess Inventory System_"
                 );
+
+                System.Diagnostics.Debug.WriteLine("Twilio SID: " + message.Sid);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Handle connection errors here
+                System.Diagnostics.Debug.WriteLine("Twilio Error: " + ex.Message);
             }
         }
 
@@ -67,14 +73,20 @@ namespace HostelManagmentSystem
         {
             lblError.Text = ""; // Clear existing errors
 
-            if (string.IsNullOrEmpty(hfSelectedItemID.Value) || string.IsNullOrEmpty(txtAmountUsed.Text)) return;
+            if (string.IsNullOrEmpty(hfSelectedItemID.Value) || string.IsNullOrEmpty(txtAmountUsed.Text))
+            {
+                lblError.Text = "❌ Please select an item first.";
+                return;
+            }
 
             string itemId = hfSelectedItemID.Value;
+            // Capture itemName from the label before entering the using block
+            string itemName = lblSelectedItem.Text;
             decimal amountUsed = decimal.Parse(txtAmountUsed.Text);
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // 1. Fetch current quantity FIRST
+                // 1. Fetch current quantity FIRST to prevent negative stock
                 string checkQuery = "SELECT Quantity FROM Items WHERE ItemID = @ID";
                 SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
                 checkCmd.Parameters.AddWithValue("@ID", itemId);
@@ -85,11 +97,11 @@ namespace HostelManagmentSystem
                 // 2. STOPS the negative value
                 if (amountUsed > currentQty)
                 {
-                    lblError.Text = "❌ Error: Cannot use more than available stock!";
+                    lblError.Text = $"❌ Error: Only {currentQty} units available!";
                     return;
                 }
 
-                // 3. Only then proceed with subtraction
+                // 3. Update the database and retrieve the NEW quantity and threshold
                 string query = @"UPDATE Items SET Quantity = Quantity - @Used 
                          OUTPUT INSERTED.Quantity, INSERTED.QuantityThreshold
                          WHERE ItemID = @ID";
@@ -102,10 +114,19 @@ namespace HostelManagmentSystem
                 {
                     if (reader.Read())
                     {
-                        // Trigger WhatsApp if needed
+                        // FIX: Define newQty and threshold here from the database results
+                        decimal newQty = Convert.ToDecimal(reader["Quantity"]);
+                        decimal threshold = Convert.ToDecimal(reader["QuantityThreshold"]);
+
+                        // 4. Trigger WhatsApp if the new stock is at or below threshold
+                        if (newQty <= threshold)
+                        {
+                            SendAutomatedWhatsApp(itemName, newQty);
+                        }
                     }
                 }
             }
+            // Refresh to update the list and stats
             Response.Redirect("UserDashboard.aspx");
         }
 

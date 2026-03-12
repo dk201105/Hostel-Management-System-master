@@ -115,27 +115,56 @@ namespace HostelManagmentSystem
                
                 // --- 6. SEED INVENTORY ITEMS (Add this after table creation) ---
                 ExecuteQuery(conn, @"
-                    IF NOT EXISTS (SELECT 1 FROM Items WHERE ItemName = 'Toor Dal')
+                    IF (SELECT COUNT(*) FROM Items) = 0
                     BEGIN
-                        INSERT INTO Items (ItemName, Quantity, QuantityThreshold, Category) VALUES
-                        ('Toor Dal', 0, 20, 'Grains'), ('Urad Dal', 0, 30, 'Grains'),
-                        ('Moong Dal', 0, 10, 'Grains'), ('Bengal Gram', 0, 10, 'Grains'),
-                        ('Black Channa', 0, 5, 'Grains'), ('Ground Nut', 0, 10, 'Grains'),
-                        ('Green Gram', 0, 5, 'Grains'), ('Green Peas', 0, 5, 'Grains'),
-                        ('Rava', 0, 10, 'Grains'), ('Wheat Flour', 0, 50, 'Flours'),
-                        ('Maida', 0, 10, 'Flours'), ('Corn Flour', 0, 5, 'Flours'),
-                        ('Chilli Powder', 0, 2, 'Masala Powders'), ('Coriander Powder', 0, 1, 'Masala Powders'),
-                        ('Turmeric', 0, 2, 'Masala Powders'), ('Mustard', 0, 5, 'Spices'),
-                        ('Fenugreek', 0, 2, 'Spices'), ('Fennel', 0, 2, 'Spices'),
-                        ('Cumin', 0, 1, 'Spices'), ('Pepper', 0, 2, 'Spices'),
-                        ('Cloves', 0, 0.5, 'Spices'), ('Dry Chilli', 0, 5, 'Spices'),
-                        ('Pattai', 0, 0.5, 'Spices'), ('Annachi Poo', 0, 0.2, 'Spices'),
-                        ('Elachi (Cardamom)', 0, 0.2, 'Spices'), ('Tomato Sauce', 0, 10, 'Sauces'),
-                        ('Soya Sauce', 0, 5, 'Sauces'), ('Vim Bar', 0, 50, 'Detergents'),
-                        ('Tide', 0, 50, 'Detergents'), ('Tamarind', 0, 10, 'Essentials'),
-                        ('Coffee Powder', 0, 5, 'Essentials'), ('Tea Powder', 0, 10, 'Essentials'),
-                        ('Garlic', 0, 10, 'Essentials'), ('Salt (table)', 0, 50, 'Essentials'),
-                        ('Rock Salt', 0, 30, 'Essentials');
+                        INSERT INTO Items (ItemName, QuantityThreshold, Unit, Category, Quantity) VALUES
+                        -- GRAINS & DALS
+                        ('Toor Dal', 20, 'kg', 'Grains/Dals', 0), ('Urad Dal', 30, 'kg', 'Grains/Dals', 0),
+                        ('Moong Dal', 10, 'kg', 'Grains/Dals', 0), ('Bengal Gram', 10, 'kg', 'Grains/Dals', 0),
+                        ('Black Channa', 5, 'kg', 'Grains/Dals', 0), ('Ground Nut', 10, 'kg', 'Grains/Dals', 0),
+                        ('Green Gram', 5, 'kg', 'Grains/Dals', 0), ('Green Peas', 5, 'kg', 'Grains/Dals', 0),
+                        ('Rava', 10, 'kg', 'Grains/Dals', 0), ('Boiled Rice', 30, 'kg', 'Grains/Dals', 0), 
+                        ('Idly Rice', 30, 'kg', 'Grains/Dals', 0), ('Raw Rice', 30, 'kg', 'Grains/Dals', 0),
+                        
+                        -- FLOURS
+                        ('Wheat Flour', 50, 'kg', 'Flour', 0), ('Maida', 10, 'kg', 'Flour', 0),
+                        ('Corn Flour', 5, 'kg', 'Flour', 0), ('Bengal Gram Flour', 5, 'kg', 'Flour', 0),
+                        ('Rice Flour', 5, 'kg', 'Flour', 0),
+                        
+                        -- MASALA POWDERS
+                        ('Chilli Powder', 2, 'kg', 'Masala', 0), ('Coriander Powder', 1, 'kg', 'Masala', 0),
+                        ('Turmeric', 2, 'kg', 'Masala', 0), ('Chicken Masala', 1, 'kg', 'Masala', 0),
+                        ('Kuzhambu Masala', 1, 'kg', 'Masala', 0), ('Biriyani Masala', 1, 'kg', 'Masala', 0),
+                        ('Sambar Powder', 2, 'kg', 'Masala', 0), ('Fried Gram', 2, 'kg', 'Masala', 0), 
+                        ('Dhania', 2, 'kg', 'Masala', 0), 
+
+                        
+                        -- SPICES & SEEDS
+                        ('Mustard', 5, 'kg', 'Spices', 0), ('Fenugreek', 2, 'kg', 'Spices', 0),
+                        ('Fennel', 2, 'kg', 'Spices', 0), ('Cumin', 1, 'kg', 'Spices', 0),
+                        ('Pepper', 2, 'kg', 'Spices', 0), ('Cloves', 0.5, 'kg', 'Spices', 0),
+                        ('Dry Chilli', 5, 'kg', 'Spices', 0), ('Pattai', 0.5, 'kg', 'Spices', 0),
+                        ('Annachi Poo', 0.2, 'kg', 'Spices', 0), ('Elachi (Cardamom)', 0.2, 'kg', 'Spices', 0),
+                        ('Jadhi Pathri', 2, 'kg', 'Spices', 0), ('LG Powder', 10, 'units', 'Spices', 0),
+                        ('LG Rock', 10, 'boxes', 'Spices', 0), ('Marathi Mooku', 10, 'boxes', 'Spices', 0),
+                        
+                        -- DRY FRUIT
+                        ('Cashew Powder', 2, 'kg', 'Dry Fruits', 0), ('Dry Grapes', 0.5, 'kg', 'Dry Fruits', 0),
+                        ('Cashew Nut', 0.5, 'kg', 'Dry Fruits', 0),
+                        
+                        -- SAUCES & LIQUIDS
+                        ('Tomato Sauce', 10, 'bottles', 'Sauces', 0), ('Soya Sauce', 5, 'bottles', 'Sauces', 0),
+                        ('Vinegar', 5, 'bottles', 'Sauces', 0), ('Chilli Sauce', 5, 'bottles', 'Sauces', 0),
+                        
+                        -- CLEANING
+                        ('Vim Bar', 50, 'units', 'Detergent', 0), ('Tide', 50, 'units', 'Detergent', 0), ('EXO Scrub', 50, 'units', 'Detergent', 0),
+                        
+                        -- ESSENTIALS
+                        ('Tamarind', 10, 'kg', 'Essentials', 0), ('Appalam', 5, 'kg/pcs', 'Essentials', 0),
+                        ('Coffee Powder', 5, 'kg', 'Beverages', 0), ('Tea Powder', 10, 'kg', 'Beverages', 0),
+                        ('Garlic', 10, 'kg', 'Veggies', 0), ('Table Salt', 50, 'kg', 'Essentials', 0), 
+                        ('Sugar', 50, 'kg', 'Essentials', 0), ('Rock Salt', 30, 'kg', 'Essentials', 0), ('Coconut Oil', 50, 'L', 'Essentials', 0), 
+                        ('Oil', 50, 'L', 'Essentials', 0), ('Gingelly Oil', 30, 'L', 'Essentials', 0), ('Ghee', 30, 'L', 'Essentials', 0);
                     END");
 
                 // --- 6. ORDERS TABLE (Links to Users) ---

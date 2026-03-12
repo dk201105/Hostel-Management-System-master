@@ -31,6 +31,15 @@ namespace HostelManagmentSystem {
         protected global::System.Web.UI.WebControls.Label lblFullName;
         
         /// <summary>
+        /// litUserInitial control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litUserInitial;
+        
+        /// <summary>
         /// lnkLogout control.
         /// </summary>
         /// <remarks>
@@ -121,15 +130,6 @@ namespace HostelManagmentSystem {
         protected global::System.Web.UI.WebControls.TextBox txtAmountUsed;
         
         /// <summary>
-        /// txtDateUsed control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtDateUsed;
-        
-        /// <summary>
         /// lblError control.
         /// </summary>
         /// <remarks>
@@ -137,6 +137,15 @@ namespace HostelManagmentSystem {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblError;
+        
+        /// <summary>
+        /// txtDateUsed control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtDateUsed;
         
         /// <summary>
         /// btnUpdateRecord control.

@@ -100,8 +100,6 @@
     <form id="form1" runat="server">
         
         <div class="header">
-            <button class="btn-alerts" type="button"><i class="fas fa-bell"></i> Alerts</button>
-    
             <div style="text-align:center;">
                 <img src="wcc_icon.png" alt="WCC Logo" />
             </div>
@@ -109,11 +107,11 @@
             <div class="user-profile-wrap" onclick="toggleProfileMenu(event)">
                 <div class="user-info">
                     <p style="margin:0; font-size:12px; color:#666; text-transform: uppercase;">User Dashboard</p>
-                    <asp:Label ID="lblFullName" runat="server" Text="priyan" Font-Bold="true" ForeColor="#009933" Font-Size="Medium"></asp:Label>
+                    <asp:Label ID="lblFullName" runat="server" Font-Bold="true" ForeColor="#009933" Font-Size="Medium"></asp:Label>
                 </div>
 
                 <div style="width:40px; height:40px; background:#009933; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size: 18px;">
-                    P
+                    <asp:Literal ID="litUserInitial" runat="server"></asp:Literal>
                 </div>
 
                 <i class="fas fa-chevron-down" style="font-size: 12px; color: #94a3b8;"></i>
@@ -178,13 +176,13 @@
                     <asp:TextBox ID="txtAmountUsed" runat="server" CssClass="form-control" placeholder="Enter amount (e.g. 50)"></asp:TextBox>
                 </div>
 
+                <div style="margin-bottom: 10px;">
+                     <asp:Label ID="lblError" runat="server" ForeColor="#ef4444" Font-Size="13px" Font-Bold="true" Text=""></asp:Label>
+                </div>
+
                 <div class="form-group">
                     <label>Date Used:</label>
                     <asp:TextBox ID="txtDateUsed" runat="server" TextMode="Date" CssClass="form-control"></asp:TextBox>
-                </div>
-
-                <div style="margin-bottom: 10px; text-align: center;">
-                    <asp:Label ID="lblError" runat="server" ForeColor="#ef4444" Font-Size="13px" Font-Bold="true" Text=""></asp:Label>
                 </div>
 
                 <asp:Button ID="btnUpdateRecord" runat="server" Text="UPDATE RECORD" CssClass="btn-submit" OnClick="btnUpdateRecord_Click" />
