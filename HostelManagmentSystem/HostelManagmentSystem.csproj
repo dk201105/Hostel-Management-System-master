@@ -200,6 +200,7 @@
     <Content Include="Login.aspx" />
     <Content Include="logo.jpg" />
     <Content Include="Signup.aspx" />
+    <Content Include="Untitled design.png" />
     <Content Include="UserDashboard.aspx" />
     <Content Include="wcc_icon.png" />
     <Content Include="Web.config">

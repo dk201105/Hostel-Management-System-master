@@ -69,6 +69,18 @@ namespace HostelManagmentSystem
             }
         }
 
+        protected string GetBadgeClass(object qty, object threshold)
+        {
+            if (qty == DBNull.Value || threshold == DBNull.Value) return "badge-grey";
+
+            decimal q = Convert.ToDecimal(qty);
+            decimal t = Convert.ToDecimal(threshold);
+
+            if (q <= 0) return "badge-red";
+            if (q <= t) return "badge-yellow";
+            return "badge-green";
+        }
+
         protected void btnUpdateRecord_Click(object sender, EventArgs e)
         {
             DateTime dateUsed = DateTime.Parse(txtDateUsed.Text);

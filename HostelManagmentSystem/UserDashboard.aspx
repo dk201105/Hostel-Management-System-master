@@ -9,11 +9,25 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
         
         /* HEADER */
-        .header { background: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
+        .header { 
+            background: white; 
+            padding: 15px 40px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            border-bottom: 1px solid #ddd;
+            position: relative;
+        }
         .header img { height: 50px; }
         .user-info { text-align: right; }
         .user-info h4 { margin: 0; color: #009933; }
         .btn-alerts { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+
+        .badge { padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .badge-grey   { background: #e2e8f0; color: #475569; }
+        .badge-green  { background: #dcfce7; color: #15803d; }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-red    { background: #fee2e2; color: #b91c1c; }
 
         /* STATS CARDS */
         .stats-container { display: flex; gap: 20px; padding: 20px 40px; }
@@ -101,10 +115,10 @@
         
         <div class="header">
             <div style="text-align:center;">
-                <img src="wcc_icon.png" alt="WCC Logo" />
+                <img src="Untitled design.png" alt="WCC Logo" style="height:70px;"/>
             </div>
 
-            <div class="user-profile-wrap" onclick="toggleProfileMenu(event)">
+            <div class="user-profile-wrap" onclick="toggleProfileMenu(event)" style="position:absolute; right:40px;">
                 <div class="user-info">
                     <p style="margin:0; font-size:12px; color:#666; text-transform: uppercase;">User Dashboard</p>
                     <asp:Label ID="lblFullName" runat="server" Font-Bold="true" ForeColor="#009933" Font-Size="Medium"></asp:Label>
@@ -147,7 +161,9 @@
                     <ItemTemplate>
                         <div class="item-row" style="display: flex; justify-content: space-between; align-items: center;">
                             <div class="item-name" style="width:40%">
-                                <span class="badge bg-pink"><%# Eval("ItemName") %></span>
+                                <span class="badge <%# GetBadgeClass(Eval("Quantity"), Eval("QuantityThreshold")) %>">
+                                    <%# Eval("ItemName") %>
+                                </span>
                             </div>
             
                             <div style="width:40%; text-align: right; padding-right: 20px; font-weight: bold; color: #334155;">

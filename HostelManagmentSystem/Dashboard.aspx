@@ -20,15 +20,16 @@
     html,body{
         height:100%;
         margin:0;
+        padding: 0;
+        width: 100%;
         font-family:'Segoe UI',sans-serif;
         background:var(--bg-light);
-        display:flex;
     }
 
     /* SIDEBAR */
 
     .sidebar{
-        width:350px;
+        width:250px;
         background:var(--primary-color);
         height:100vh;
         color:white;
@@ -37,6 +38,7 @@
         top:0;
         display:flex;
         flex-direction:column;
+        z-index: 100;
     }
 
     .sidebar-header{
@@ -66,11 +68,12 @@
     /* MAIN */
 
     .main-wrapper{
-        margin-left:350px;
-        width:100%;
+        margin-left:250px;
+        min-height: 100vh;
+        width: calc(100% - 250px);
         display:flex;
         flex-direction:column;
-        flex-grow: 1; 
+        box-sizing: border-box; 
     }
 
     .top-nav {
@@ -113,8 +116,7 @@
         padding: 30px 40px; 
         width: 100%; 
         box-sizing: border-box; 
-        max-width: none;
-        flex: 1;
+        flex-grow: 1;
     }
 
     /* STATS */
@@ -124,6 +126,8 @@
         grid-template-columns:repeat(4,1fr);
         gap:20px;
         margin-bottom:30px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .stat-card{
@@ -152,6 +156,10 @@
         border:1px solid var(--border-color);
         padding:20px;
         margin-bottom:25px;
+        display: flex;          
+        flex-direction: column; 
+        align-items: center;   
+
     }
 
     .panel-title{
@@ -205,10 +213,12 @@
     .task-btn{
         background:white;
         border:1px solid var(--primary-color);
-        padding:10px 15px;
+        padding:15px 30px;
         border-radius:8px;
         cursor:pointer;
-        margin-right:10px;
+        margin: 0 10px;
+        font-size: 15px;
+        font-weight: 600;
     }
 
     .task-btn:hover{
@@ -242,6 +252,7 @@
         background-repeat: no-repeat;
         background-position: right 1rem center;
         background-size: 1em;
+        box-sizing: border-box;
     }
 
     .form-control:focus {
@@ -322,9 +333,11 @@
 
                 <div class="panel">
                     <div class="panel-title">Administrative Tasks</div>
-                    <button type="button" class="task-btn" onclick="openModal('addModal')"><i class="fas fa-plus-circle"></i> ADD NEW ITEM</button>
-                    <button type="button" class="task-btn" onclick="openModal('updateModal')"><i class="fas fa-truck-loading"></i> UPDATE STOCK</button>
-                    <button type="button" class="task-btn" onclick="openModal('reportModal')"><i class="fas fa-file-invoice"></i> MONTHLY REPORT</button>
+                    <div style="display:flex; gap:15px; justify-content:center;">
+                            <button type="button" class="task-btn" onclick="openModal('addModal')"><i class="fas fa-plus-circle"></i> ADD NEW ITEM</button>
+                            <button type="button" class="task-btn" onclick="openModal('updateModal')"><i class="fas fa-truck-loading"></i> UPDATE STOCK</button>
+                            <button type="button" class="task-btn" onclick="openModal('reportModal')"><i class="fas fa-file-invoice"></i> MONTHLY REPORT</button>
+                    </div>    
                 </div>
 
                 <div class="panel">
@@ -375,11 +388,11 @@
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
                     <div>
                         <label style="display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:5px;">Initial Qty</label>
-                        <asp:TextBox ID="txtNewQty" runat="server" TextMode="Number" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></asp:TextBox>
+                        <asp:TextBox ID="txtNewQty" runat="server" TextMode="Number" min="0.01" step="0.01" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></asp:TextBox>
                     </div>
                     <div>
                         <label style="display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:5px;">Alert Threshold</label>
-                        <asp:TextBox ID="txtNewThreshold" runat="server" TextMode="Number" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></asp:TextBox>
+                        <asp:TextBox ID="txtNewThreshold" runat="server" TextMode="Number" min="0.01" step="0.01" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></asp:TextBox>
                     </div>
                 </div>
                 <div style="margin-bottom:20px;">
@@ -392,7 +405,7 @@
                 </div>
             </div>
 
-            <div id="updateModal" class="modal-content">
+            <div id="updateModal" class="modal-content" style="display:none; background:white; width:450px; padding:30px; border-radius:12px;">
                 <div style="text-align:center; margin-bottom:20px;">
                     <i class="fas fa-truck-loading" style="font-size:24px; color:#186420;"></i>
                     <h3 style="margin:0; font-weight:600; color:#1e293b;">Update Stock Level</h3>
@@ -405,12 +418,16 @@
                 </div>
                 <div style="margin-bottom:20px;">
                     <label>Quantity to Add (+)</label>
-                    <asp:TextBox ID="txtAddQty" runat="server" TextMode="Number" CssClass="form-control"></asp:TextBox>
+                    <asp:TextBox ID="txtAddQty" runat="server" TextMode="Number" CssClass="form-control" min="0.01" step="0.01"></asp:TextBox>
                 </div>
-                <div style="text-align:right; gap:10px; display:flex; justify-content:flex-end;">
-                    <button type="button" onclick="closeAllModals()">Cancel</button>
+                <div style="text-align:right; gap:10px; display:flex; justify-content:flex-end; margin-top:20px;">
+                    <button type="button" onclick="closeAllModals()" 
+                        style="padding:10px 20px; border-radius:8px; border:1px solid #cbd5e1; background:white; cursor:pointer;">
+                        Cancel
+                    </button>
                     <asp:Button ID="btnUpdateStock" runat="server" Text="Update Stock" 
-                        OnClick="btnUpdateStock_Click" CssClass="task-btn" style="background:#186420; color:white;" />
+                        OnClick="btnUpdateStock_Click" 
+                        style="padding:10px 20px; border-radius:8px; border:none; background:#186420; color:white; cursor:pointer; font-weight:600;" />
                 </div>
             </div>
 

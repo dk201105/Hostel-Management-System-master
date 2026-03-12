@@ -92,28 +92,35 @@ namespace HostelManagmentSystem
                     iText.Layout.Element.Table table = new iText.Layout.Element.Table(iText.Layout.Properties.UnitValue.CreatePercentArray(new float[] { 4, 2, 2, 2 })).UseAllAvailableWidth();
 
                     // Header Cells
-                    table.AddHeaderCell(new iText.Layout.Element.Cell().Add(new iText.Layout.Element.Paragraph("Item Name").SetFont(boldFont)));
-                    table.AddHeaderCell(new iText.Layout.Element.Cell().Add(new iText.Layout.Element.Paragraph("Qty").SetFont(boldFont)));
-                    table.AddHeaderCell(new iText.Layout.Element.Cell().Add(new iText.Layout.Element.Paragraph("Price").SetFont(boldFont)));
-                    table.AddHeaderCell(new iText.Layout.Element.Cell().Add(new iText.Layout.Element.Paragraph("Date").SetFont(boldFont)));
+                    table.AddHeaderCell(new Cell().Add(new Paragraph("Item Name").SetFont(boldFont)));
+                    table.AddHeaderCell(new Cell().Add(new Paragraph("Qty Used").SetFont(boldFont)));
+                    table.AddHeaderCell(new Cell().Add(new Paragraph("Unit Price (₹)").SetFont(boldFont)));
+                    table.AddHeaderCell(new Cell().Add(new Paragraph("Date").SetFont(boldFont)));
 
                     using (SqlConnection conn = new SqlConnection(connString))
                     {
-                        string query = @"SELECT ItemName, ABS(ChangeAmount) as Quantity, TransactionType, TransactionDate 
-                        FROM InventoryTransactions 
-                        WHERE FORMAT(TransactionDate, 'yyyy-MM') = @Month";
-                        SqlCommand cmd = new SqlCommand(query, conn);
-                        cmd.Parameters.AddWithValue("@Month", selectedMonth);
-                        conn.Open();
-                        SqlDataReader reader = cmd.ExecuteReader();
+                        string query = @"SELECT t.ItemName, ABS(t.ChangeAmount) as Quantity, 
+                                   t.TransactionType, t.TransactionDate,
+                                   ISNULL(i.ItemPrice, 0) as ItemPrice
+                            FROM InventoryTransactions t
+                            LEFT JOIN Items i ON t.ItemID = i.ItemID
+                            WHERE FORMAT(t.TransactionDate, 'yyyy-MM') = @Month";
+
+                        SqlCommand cmd = new SqlCommand(query, conn);  
+                        cmd.Parameters.AddWithValue("@Month", selectedMonth);  
+                        conn.Open();  
+                        SqlDataReader reader = cmd.ExecuteReader();  
 
                         while (reader.Read())
                         {
                             table.AddCell(new Paragraph(reader["ItemName"].ToString()));
                             table.AddCell(new Paragraph(reader["Quantity"].ToString()));
-                            table.AddCell(new Paragraph(reader["TransactionType"].ToString()));
+                            table.AddCell(new Paragraph(reader["ItemPrice"] != DBNull.Value
+                                ? "₹" + Convert.ToDecimal(reader["ItemPrice"]).ToString("0.00")
+                                : "N/A"));
                             table.AddCell(new Paragraph(Convert.ToDateTime(reader["TransactionDate"]).ToString("dd/MM/yyyy")));
                         }
+
                     }
 
                     document.Add(table);
@@ -154,7 +161,14 @@ namespace HostelManagmentSystem
             if (ddlItems.SelectedValue == "0" || string.IsNullOrEmpty(txtAddQty.Text)) return;
 
             int itemId = int.Parse(ddlItems.SelectedValue);
-            decimal addedQty = decimal.Parse(txtAddQty.Text);
+
+            if (!decimal.TryParse(txtAddQty.Text, out decimal addedQty) || addedQty < 0.01m)
+            {
+                ClientScript.RegisterStartupScript(this.GetType(), "alert",
+                    "alert('Please enter a valid quantity (minimum 0.01).');", true);
+                return;
+            }
+
             string itemName = ddlItems.SelectedItem.Text;
 
             using (SqlConnection conn = new SqlConnection(connString))
