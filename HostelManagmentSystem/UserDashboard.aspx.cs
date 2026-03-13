@@ -65,8 +65,11 @@ namespace HostelManagmentSystem
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Twilio Error: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("=== TWILIO ERROR ===");
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+                System.Diagnostics.Debug.WriteLine(ex.StackTrace);
             }
+
         }
 
         protected string GetBadgeClass(object qty, object threshold)
@@ -83,38 +86,43 @@ namespace HostelManagmentSystem
 
         protected void btnUpdateRecord_Click(object sender, EventArgs e)
         {
-            DateTime dateUsed = DateTime.Parse(txtDateUsed.Text);
-            lblError.Text = ""; // Clear existing errors
+            lblError.Text = "";
 
             if (string.IsNullOrEmpty(hfSelectedItemID.Value) || string.IsNullOrEmpty(txtAmountUsed.Text))
             {
-                lblError.Text = "❌ Please select an item first.";
+                lblError.Text = "Please select an item first.";
                 return;
             }
 
+            if (string.IsNullOrEmpty(txtDateUsed.Text))
+            {
+                lblError.Text = "Please select a date.";
+                return;
+            }
+
+            DateTime dateUsed = DateTime.Parse(txtDateUsed.Text);
             string itemId = hfSelectedItemID.Value;
-            // Capture itemName from the label before entering the using block
             string itemName = lblSelectedItem.Text;
             decimal amountUsed = decimal.Parse(txtAmountUsed.Text);
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // 1. Fetch current quantity FIRST to prevent negative stock
+                conn.Open();
+
+                // 1. Check current quantity
                 string checkQuery = "SELECT Quantity FROM Items WHERE ItemID = @ID";
                 SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
                 checkCmd.Parameters.AddWithValue("@ID", itemId);
-                conn.Open();
-
                 decimal currentQty = Convert.ToDecimal(checkCmd.ExecuteScalar() ?? 0);
 
-                // 2. STOPS the negative value
                 if (amountUsed > currentQty)
                 {
-                    lblError.Text = $"❌ Error: Only {currentQty} units available!";
+                    lblError.Text = $"Error: Only {currentQty} units available!";
+                    SendAutomatedWhatsApp(itemName + " (OUT OF STOCK)", 0);
                     return;
                 }
 
-                // 3. Update the database and retrieve the NEW quantity and threshold
+                // 2. Update quantity and get new values
                 string query = @"UPDATE Items SET Quantity = Quantity - @Used 
                          OUTPUT INSERTED.Quantity, INSERTED.QuantityThreshold
                          WHERE ItemID = @ID";
@@ -127,31 +135,37 @@ namespace HostelManagmentSystem
                 {
                     if (reader.Read())
                     {
-                        // FIX: Define newQty and threshold here from the database results
                         decimal newQty = Convert.ToDecimal(reader["Quantity"]);
                         decimal threshold = Convert.ToDecimal(reader["QuantityThreshold"]);
 
-                        // 4. Trigger WhatsApp if the new stock is at or below threshold
-                        if (newQty <= threshold)
+                        if (newQty <= threshold && newQty > 0)
                         {
-                            SendAutomatedWhatsApp(itemName, newQty);
+                            SendAutomatedWhatsApp(itemName + " (Low Stock)", newQty);
+                        }
+                        else if (newQty <= 0)
+                        {
+                            SendAutomatedWhatsApp(itemName + " (OUT OF STOCK)", 0);
                         }
                     }
-                }
-                string logQuery = @"INSERT INTO InventoryTransactions (ItemID, ItemName, ChangeAmount, TransactionDate, TransactionType) 
+                } // closes SqlDataReader
+
+                // 3. Log the transaction
+                string logQuery = @"INSERT INTO InventoryTransactions 
+                            (ItemID, ItemName, ChangeAmount, TransactionDate, TransactionType) 
                             VALUES (@ID, @Name, @Amount, @Date, 'Usage')";
 
                 SqlCommand logCmd = new SqlCommand(logQuery, conn);
                 logCmd.Parameters.AddWithValue("@ID", itemId);
                 logCmd.Parameters.AddWithValue("@Name", itemName);
-                logCmd.Parameters.AddWithValue("@Amount", -amountUsed); // Negative for usage
+                logCmd.Parameters.AddWithValue("@Amount", -amountUsed);
                 logCmd.Parameters.AddWithValue("@Date", dateUsed);
                 logCmd.ExecuteNonQuery();
-            }
-            // Refresh to update the list and stats
-            Response.Redirect("UserDashboard.aspx");
-        }
 
+            } // closes SqlConnection
+
+            Response.Redirect("UserDashboard.aspx");
+
+        } // closes btnUpdateRecord_Click
 
         protected void LoadStats()
         {

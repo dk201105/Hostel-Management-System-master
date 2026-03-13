@@ -77,7 +77,8 @@ namespace HostelManagmentSystem
                     iText.Layout.Document document = new iText.Layout.Document(pdf, iText.Kernel.Geom.PageSize.A4);
 
                     // Header - Using a bold font explicitly to bypass SetBold errors
-                    iText.Kernel.Font.PdfFont boldFont = iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD);
+                    iText.Kernel.Font.PdfFont normalFont = iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.TIMES_ROMAN);
+                    iText.Kernel.Font.PdfFont boldFont = iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.TIMES_BOLD);
 
                     document.Add(new iText.Layout.Element.Paragraph("WOMEN'S CHRISTIAN COLLEGE")
                         .SetFont(boldFont)
@@ -97,6 +98,9 @@ namespace HostelManagmentSystem
                     table.AddHeaderCell(new Cell().Add(new Paragraph("Unit Price (₹)").SetFont(boldFont)));
                     table.AddHeaderCell(new Cell().Add(new Paragraph("Date").SetFont(boldFont)));
 
+                    int totalProducts = 0;
+                    decimal totalAmount = 0;
+
                     using (SqlConnection conn = new SqlConnection(connString))
                     {
                         string query = @"SELECT t.ItemName, ABS(t.ChangeAmount) as Quantity, 
@@ -113,17 +117,38 @@ namespace HostelManagmentSystem
 
                         while (reader.Read())
                         {
+                            decimal qty = Convert.ToDecimal(reader["Quantity"]);
+                            decimal price = Convert.ToDecimal(reader["ItemPrice"]);
+
+
                             table.AddCell(new Paragraph(reader["ItemName"].ToString()));
                             table.AddCell(new Paragraph(reader["Quantity"].ToString()));
                             table.AddCell(new Paragraph(reader["ItemPrice"] != DBNull.Value
                                 ? "₹" + Convert.ToDecimal(reader["ItemPrice"]).ToString("0.00")
                                 : "N/A"));
                             table.AddCell(new Paragraph(Convert.ToDateTime(reader["TransactionDate"]).ToString("dd/MM/yyyy")));
+
+                            totalProducts++;
+                            totalAmount += qty * price;
+
                         }
 
                     }
 
                     document.Add(table);
+
+                    document.Add(new iText.Layout.Element.Paragraph(" ").SetMarginTop(20));
+
+                    document.Add(new iText.Layout.Element.Paragraph($"Total Transactions: {totalProducts}")
+                        .SetFont(boldFont)
+                        .SetFontSize(12)
+                        .SetTextAlignment(iText.Layout.Properties.TextAlignment.RIGHT));
+
+                    document.Add(new iText.Layout.Element.Paragraph($"Total Amount: Rs.{totalAmount:0.00}")
+                        .SetFont(boldFont)
+                        .SetFontSize(13)
+                        .SetTextAlignment(iText.Layout.Properties.TextAlignment.RIGHT));
+
                     document.Close();
                 }
             }

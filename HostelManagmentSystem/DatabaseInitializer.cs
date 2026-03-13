@@ -59,43 +59,7 @@ namespace HostelManagmentSystem
                         VALUES ('admin@wcc.edu.in', 'Administrator', 'admin123');
                     END");
 
-                // --- 2. STUDENTS TABLE ---
-                ExecuteQuery(conn, @"
-                    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
-                    BEGIN
-                        CREATE TABLE Students (
-                            StudentID INT IDENTITY(1,1) PRIMARY KEY,
-                            StudentName NVARCHAR(100) NOT NULL,
-                            Department NVARCHAR(100),
-                            PhoneNumber NVARCHAR(20)
-                        );
-                    END");
 
-                // --- 3. SUPPLIERS TABLE ---
-                ExecuteQuery(conn, @"
-                    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Suppliers]') AND type in (N'U'))
-                    BEGIN
-                        CREATE TABLE Suppliers (
-                            CompanyID INT IDENTITY(1,1) PRIMARY KEY,
-                            CompanyName NVARCHAR(100) NOT NULL,
-                            CompanyContact NVARCHAR(50),
-                            Address NVARCHAR(255),
-                            GST NVARCHAR(50),
-                            Email NVARCHAR(100)
-                        );
-                    END");
-
-                // --- 4. ATTENDANCE TABLE (Links to Students) ---
-                ExecuteQuery(conn, @"
-                    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Attendance]') AND type in (N'U'))
-                    BEGIN
-                        CREATE TABLE Attendance (
-                            AttendanceID INT IDENTITY(1,1) PRIMARY KEY,
-                            StudentID INT FOREIGN KEY REFERENCES Students(StudentID),
-                            AttendanceDate DATE NOT NULL,
-                            Status NVARCHAR(20) -- e.g., Present, Absent
-                        );
-                    END");
 
                 // --- 5. ITEMS TABLE (Updated to match Dashboard.aspx.cs) ---
                 ExecuteQuery(conn, @"
@@ -179,17 +143,6 @@ namespace HostelManagmentSystem
                         );
                     END");
 
-                // --- 7. ORDER DETAILS TABLE (Links to Orders AND Items) ---
-                ExecuteQuery(conn, @"
-                    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OrderDetails]') AND type in (N'U'))
-                    BEGIN
-                        CREATE TABLE OrderDetails (
-                            OrderDetailsID INT IDENTITY(1,1) PRIMARY KEY,
-                            OrderID INT FOREIGN KEY REFERENCES Orders(OrderID),
-                            ItemID INT FOREIGN KEY REFERENCES Items(ItemID),
-                            QuantityBought DECIMAL(18, 2)
-                        );
-                    END");
                 // --- NEW: INVENTORY TRANSACTIONS TABLE ---
                 ExecuteQuery(conn, @"
                     IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[InventoryTransactions]') AND type in (N'U'))
