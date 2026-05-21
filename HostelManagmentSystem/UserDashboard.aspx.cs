@@ -45,7 +45,7 @@ namespace HostelManagmentSystem
         {
             // 1. Your Twilio Credentials
             string accountSid = "AC90099bd76e3803b95a5d734aa5eba423".Trim();
-            string authToken = "e984ff3b678409ddf76688a1b0e56918".Trim();
+            string authToken = "e083cd8305008111f584603b31614de1".Trim();
 
             TwilioClient.Init(accountSid, authToken);
 

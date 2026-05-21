@@ -270,6 +270,17 @@
         letter-spacing: 0.025em;
     }
 
+    .form-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+    color: #334155;
+    background: white;
+}
+
     </style>
 </head>
 
@@ -381,10 +392,30 @@
                     <i class="fas fa-plus-circle" style="font-size:24px; color:#186420;"></i>
                     <h3 style="margin:0; font-weight:600; color:#1e293b;">Add New Product</h3>
                 </div>
+
                 <div style="margin-bottom:15px;">
                     <label style="display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:5px;">Item Name</label>
                     <asp:TextBox ID="txtNewItemName" runat="server" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></asp:TextBox>
                 </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:5px;">Category</label>
+                    <select id="ddlCategory" class="form-select" onchange="fillCategoryThreshold(this.value)">
+                        <option value="">-- Select Category --</option>
+                        <option value="Grains/Dals">Grains / Dals</option>
+                        <option value="Flour">Flour</option>
+                        <option value="Masala">Masala</option>
+                        <option value="Spices">Spices</option>
+                        <option value="Dry Fruits">Dry Fruits</option>
+                        <option value="Sauces">Sauces</option>
+                        <option value="Detergent">Detergent</option>
+                        <option value="Essentials">Essentials</option>
+                        <option value="Beverages">Beverages</option>
+                        <option value="Veggies">Veggies</option>
+                    </select>
+                    </asp:DropDownList>
+                </div>
+
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
                     <div>
                         <label style="display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:5px;">Initial Qty</label>
@@ -485,6 +516,33 @@
                 });
             }
         });
+
+        // Category default thresholds
+        const categoryThresholds = {
+            'Grains/Dals': 30,
+            'Flour':       10,
+            'Masala':       2,
+            'Spices':       1,
+            'Dry Fruits':   1,
+            'Sauces':       5,
+            'Detergent':   10,
+            'Essentials':  10,
+            'Beverages':    5,
+            'Veggies':      5
+        };
+
+        function fillCategoryThreshold(category) {
+            const thresholdInput = document.getElementById('<%= txtNewThreshold.ClientID %>');
+            const hiddenCategory = document.getElementById('<%= hfNewCategory.ClientID %>');
+    
+            hiddenCategory.value = category;
+    
+            if (categoryThresholds[category]) {
+                thresholdInput.value = categoryThresholds[category];
+            } else {
+                thresholdInput.value = '';
+            }
+        }
     </script>
 </body>
 </html>
